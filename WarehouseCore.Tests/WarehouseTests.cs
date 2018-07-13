@@ -1,9 +1,10 @@
-using System;
+using FluentAssertions;
+//using WarehouseCore;
 using Xunit;
 
-namespace Warehouse.Tests
+namespace WarehouseCore.Tests
 {
-    public class WarehouseTests
+	public class WarehouseTests
     {
         [Fact]
         public void MemoryWarehouseShouldStoreAndReturnPallet()
@@ -13,7 +14,13 @@ namespace Warehouse.Tests
 			var payload = "Test Test test";
 			var key = "item1";
 
+			var policy = new LoadingDockPolicy();
 			var receipt = warehouse.Store(key, payload, new[] { LoadingDockPolicy.Ephemeral });
+
+			var returnedValue = warehouse.Retrieve(key);
+
+			returnedValue.Should().Be(payload);
+
 
 		}
     }

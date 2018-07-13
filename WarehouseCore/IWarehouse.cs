@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Warehouse
+namespace WarehouseCore
 {
     public interface IWarehouse
     {

@@ -3,9 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Warehouse.Memory;
 
-namespace Warehouse
+namespace WarehouseCore
 {
 	public class Warehouse : IWarehouse
 	{
@@ -33,6 +32,11 @@ namespace Warehouse
 			SessionReceipts.Add(receipt);
 
 			return receipt;
+		}
+
+		public string Retrieve(string key)
+		{
+			return Shelves.FirstOrDefault(shelf => shelf.CanRetrieve(key))?.Retrieve(key) ?? string.Empty;
 		}
 
 		private IEnumerable<IShelf> ResolveShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies)

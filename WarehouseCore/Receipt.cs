@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Warehouse
+namespace WarehouseCore
 {
 	public class Receipt
 	{
