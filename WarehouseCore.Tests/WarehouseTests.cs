@@ -1,5 +1,6 @@
 using FluentAssertions;
-//using WarehouseCore;
+using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace WarehouseCore.Tests
@@ -10,18 +11,44 @@ namespace WarehouseCore.Tests
         public void MemoryWarehouseShouldStoreAndReturnPallet()
         {
 			var warehouse = new Warehouse();
+			warehouse.Initialize();
 
-			var payload = "Test Test test";
+			var payload = new[] { "Test Test test" };
 			var key = "item1";
+			var scope = new ApplicationScope("TestApp");
 
 			var policy = new LoadingDockPolicy();
-			var receipt = warehouse.Store(key, payload, new[] { LoadingDockPolicy.Ephemeral });
+			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
 
-			var returnedValue = warehouse.Retrieve(key);
+			var returnedValue = warehouse.Retrieve(key, scope).ToList();
 
-			returnedValue.Should().Be(payload);
-
-
+			returnedValue.Should().Contain(payload);
 		}
-    }
+
+		[Fact]
+		public void MemoryWarehouseShouldStoreAndReturnAndAppendAndReturnPallet()
+		{
+			var warehouse = new Warehouse();
+			warehouse.Initialize();
+
+			var payload = new List<string>() { "Test Test test" };
+			var key = "item1";
+			var scope = new ApplicationScope("TestApp");
+
+			var policy = new LoadingDockPolicy();
+			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
+
+			var returnedValue = warehouse.Retrieve(key, scope).ToList();
+
+			returnedValue.Should().Contain(payload);
+
+			var nextText = " 123456789";
+			payload.Add(nextText);
+
+			warehouse.Append(key, scope, new[]{ nextText }, receipt.Policies);
+
+			var newReturnedValue = warehouse.Retrieve(key, scope);
+			newReturnedValue.Should().Contain(payload);
+		}
+	}
 }

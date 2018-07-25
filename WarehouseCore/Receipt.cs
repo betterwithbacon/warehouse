@@ -8,5 +8,6 @@ namespace WarehouseCore
 		public Guid UUID { get; set; }
 		public string Key { get; set; }
 		public IList<LoadingDockPolicy> Policies { get; set; }
+		public IStorageScope Scope { get; internal set; }
 	}
 }

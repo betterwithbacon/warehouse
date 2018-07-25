@@ -9,16 +9,37 @@ namespace WarehouseCore
 	public class Warehouse : IWarehouse
 	{
 		public readonly List<Receipt> SessionReceipts = new List<Receipt>();
-		static readonly ConcurrentBag<IShelf> Shelves = new ConcurrentBag<IShelf>();
+		readonly ConcurrentBag<IShelf> Shelves = new ConcurrentBag<IShelf>();
 
-		public Receipt Store(string key, string payload, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
+		public bool IsInitialized => Shelves.Count > 0;
+
+		public Warehouse(bool initImmediately = true)
 		{
+			if(initImmediately)			
+				Initialize();			
+		}
+
+		public void Initialize()
+		{
+			// only do this once
+			if (IsInitialized)
+				return;
+
+			// pre-seed the shelves with all available storage types
+			var newShelf = new MemoryShelf();
+			Shelves.Add(newShelf);
+		}
+
+		public Receipt Store(string key, IStorageScope scope, IList<string> payload, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
+		{
+			ThrowIfNotInitialized();
+
 			var uuid = Guid.NewGuid();
 
 			// resolve the appropriate store, based on the policy
 			foreach (var shelf in ResolveShelves(loadingDockPolicies))
 			{
-				shelf.Store(uuid, key, payload);
+				shelf.Store(uuid, key, scope, payload);
 			}
 
 			// the receipt is largely what was passed in when it was stored
@@ -26,6 +47,7 @@ namespace WarehouseCore
 			{
 				UUID = uuid,
 				Key = key,
+				Scope = scope,
 				Policies = loadingDockPolicies.ToList()
 			};
 
@@ -34,25 +56,35 @@ namespace WarehouseCore
 			return receipt;
 		}
 
-		public string Retrieve(string key)
+		public void Append(string key, IStorageScope scope, IEnumerable<string> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
-			return Shelves.FirstOrDefault(shelf => shelf.CanRetrieve(key))?.Retrieve(key) ?? string.Empty;
+			ThrowIfNotInitialized();
+			var log = Retrieve(key, scope);
+			Store(key, scope, log.Concat(data).ToList(), loadingDockPolicies);
+		}
+
+		public IEnumerable<string> Retrieve(string key, IStorageScope scope)
+		{
+			ThrowIfNotInitialized();
+			return Shelves.FirstOrDefault(shelf => shelf.CanRetrieve(key, scope))?.Retrieve(key, scope) ?? Enumerable.Empty<string>();
 		}
 
 		private IEnumerable<IShelf> ResolveShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
-			// any ephemeral call, should store the data in a memory pool
-			if (loadingDockPolicies.Contains(LoadingDockPolicy.Ephemeral))
-			{
-				if (Shelves.TryPeek(out var shelf))
-					yield return shelf;
-				else
-				{
-					var newShelf = new MemoryShelf();
-					Shelves.Add(newShelf);
-					yield return newShelf;
-				}
-			}
+			return Shelves.Where(s => s.CanEnforcePolicies(loadingDockPolicies));
+			
+			//// any ephemeral call, should store the data in a memory pool
+			//if (loadingDockPolicies.Contains(LoadingDockPolicy.Ephemeral))
+			//{
+			//	if (Shelves.TryPeek(out var shelf))
+			//		yield return shelf;				
+			//}
+		}
+
+		public void ThrowIfNotInitialized()
+		{
+			if (!IsInitialized)
+				throw new InvalidOperationException("Warehouse not initialized.");
 		}
 	}
 }
