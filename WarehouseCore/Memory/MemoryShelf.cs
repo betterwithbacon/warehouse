@@ -18,12 +18,17 @@ namespace WarehouseCore
 
 		public IEnumerable<string> Retrieve(string key, IStorageScope scope)
 		{
-			return Records[new MemoryShelfKey(scope, key)];
+			return Records.GetValueOrDefault(new MemoryShelfKey(scope, key), new List<string>());
 		}
 
-		public void Store(Guid uuid, string key, IStorageScope scope, IEnumerable<string> payload)
+		public void Append(string key, IStorageScope scope, IEnumerable<string> additionalPayload)
 		{
-			Records[new MemoryShelfKey(scope,key)] = payload.ToList();
+			Records.AddOrUpdate(new MemoryShelfKey(scope, key), additionalPayload.ToList(), (k, a) => a.Concat(additionalPayload).ToList());
+		}
+
+		public void Store(string key, IStorageScope scope, IEnumerable<string> payload)
+		{
+			Records.AddOrUpdate(new MemoryShelfKey(scope, key), payload.ToList(),(k,a) => payload.ToList());
 		}
 
 		public bool CanEnforcePolicies(IEnumerable<LoadingDockPolicy> loadingDockPolicies)

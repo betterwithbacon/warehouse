@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace WarehouseCore
 {
@@ -30,17 +31,17 @@ namespace WarehouseCore
 			Shelves.Add(newShelf);
 		}
 
-		public Receipt Store(string key, IStorageScope scope, IList<string> payload, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
+		public Receipt Store(string key, IStorageScope scope, IList<string> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
 			ThrowIfNotInitialized();
 
 			var uuid = Guid.NewGuid();
 
 			// resolve the appropriate store, based on the policy
-			foreach (var shelf in ResolveShelves(loadingDockPolicies))
+			Parallel.ForEach(ResolveShelves(loadingDockPolicies), (shelf) =>
 			{
-				shelf.Store(uuid, key, scope, payload);
-			}
+				shelf.Store(key, scope, data);
+			});
 
 			// the receipt is largely what was passed in when it was stored
 			var receipt = new Receipt
@@ -59,8 +60,18 @@ namespace WarehouseCore
 		public void Append(string key, IStorageScope scope, IEnumerable<string> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
 			ThrowIfNotInitialized();
-			var log = Retrieve(key, scope);
-			Store(key, scope, log.Concat(data).ToList(), loadingDockPolicies);
+			//var log = Retrieve(key, scope);
+			//Store(key, scope, log.Concat(data).ToList(), loadingDockPolicies);
+
+			Parallel.ForEach(ResolveShelves(loadingDockPolicies), (shelf) =>
+			{
+				shelf.Append(key, scope, data);
+			});
+
+			//foreach (var shelf in ResolveShelves(loadingDockPolicies))
+			//{
+			//	shelf.Append(key, scope, data);
+			//}
 		}
 
 		public IEnumerable<string> Retrieve(string key, IStorageScope scope)
