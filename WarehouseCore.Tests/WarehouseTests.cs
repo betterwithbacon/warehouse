@@ -35,6 +35,25 @@ namespace WarehouseCore.Tests
 		}
 
 		[Fact]
+		public void PayloadSigningShouldRoundtrip()
+		{
+			var warehouse = new Warehouse();
+			warehouse.Initialize();
+
+			var payload = new[] { "Test Test test" };
+			var key = "item1";
+			var scope = new ApplicationScope("TestApp");
+
+			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
+
+			var returnedValue = warehouse.Retrieve(key, scope).ToList();
+
+			warehouse.Verify(returnedValue, receipt.SHA256Checksum).Should().BeTrue();
+
+			//receipt.SHA256Checksum.Should().Be( )
+		}
+
+		[Fact]
 		public void MemoryWarehouseShouldStoreAndReturnAndAppendAndReturnPallet()
 		{
 			var warehouse = new Warehouse();

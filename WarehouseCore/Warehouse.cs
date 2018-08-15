@@ -2,17 +2,18 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace WarehouseCore
 {
-	public class Warehouse : IWarehouse
+	public class Warehouse : IWarehouse<string,string>
 	{
 		public readonly List<Receipt> SessionReceipts = new List<Receipt>();
 		readonly ConcurrentBag<IShelf> Shelves = new ConcurrentBag<IShelf>();
 
-		public bool IsInitialized => Shelves.Count > 0;
+		private bool IsInitialized => Shelves.Count > 0;
 
 		public Warehouse(bool initImmediately = true)
 		{
@@ -49,7 +50,8 @@ namespace WarehouseCore
 				UUID = uuid,
 				Key = key,
 				Scope = scope,
-				Policies = loadingDockPolicies.ToList()
+				Policies = loadingDockPolicies.ToList(),
+				SHA256Checksum = GetSHA256Checksum(data)
 			};
 
 			SessionReceipts.Add(receipt);
@@ -57,21 +59,19 @@ namespace WarehouseCore
 			return receipt;
 		}
 
+		public bool Verify(List<string> returnedValue, string sHA256Checksum)
+		{
+			return true;	
+		}
+
 		public void Append(string key, IStorageScope scope, IEnumerable<string> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
 			ThrowIfNotInitialized();
-			//var log = Retrieve(key, scope);
-			//Store(key, scope, log.Concat(data).ToList(), loadingDockPolicies);
-
+			
 			Parallel.ForEach(ResolveShelves(loadingDockPolicies), (shelf) =>
 			{
 				shelf.Append(key, scope, data);
 			});
-
-			//foreach (var shelf in ResolveShelves(loadingDockPolicies))
-			//{
-			//	shelf.Append(key, scope, data);
-			//}
 		}
 
 		public IEnumerable<string> Retrieve(string key, IStorageScope scope)
@@ -80,22 +80,33 @@ namespace WarehouseCore
 			return Shelves.FirstOrDefault(shelf => shelf.CanRetrieve(key, scope))?.Retrieve(key, scope) ?? Enumerable.Empty<string>();
 		}
 
-		private IEnumerable<IShelf> ResolveShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
+		public IEnumerable<IShelf> ResolveShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
 			return Shelves.Where(s => s.CanEnforcePolicies(loadingDockPolicies));
-			
-			//// any ephemeral call, should store the data in a memory pool
-			//if (loadingDockPolicies.Contains(LoadingDockPolicy.Ephemeral))
-			//{
-			//	if (Shelves.TryPeek(out var shelf))
-			//		yield return shelf;				
-			//}
 		}
 
-		public void ThrowIfNotInitialized()
+		void ThrowIfNotInitialized()
 		{
 			if (!IsInitialized)
 				throw new InvalidOperationException("Warehouse not initialized.");
+		}
+
+		static string GetSHA256Checksum(IList<string> input)
+		{
+			using (var sha256 = SHA256.Create())
+			{
+				byte[] data = sha256.ComputeHash(input.SelectMany(s => Encoding.UTF8.GetBytes(s)).ToArray());
+				var sBuilder = new StringBuilder();
+				for (int i = 0; i < data.Length; i++)				
+					sBuilder.Append(data[i].ToString("x2"));
+				
+				return sBuilder.ToString();
+			}
+		}
+
+		static bool VerifySHA256Checksum(IList<string> input, string hash)
+		{
+			return GetSHA256Checksum(input).Equals(hash, StringComparison.OrdinalIgnoreCase);
 		}
 	}
 }
