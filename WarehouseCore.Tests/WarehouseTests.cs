@@ -1,6 +1,9 @@
 using FluentAssertions;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -17,6 +20,7 @@ namespace WarehouseCore.Tests
 		}
 
 		[Fact]
+		[Trait("Function", "StoreAndRetrieve")]
 		public void MemoryWarehouseShouldStoreAndReturnPallet()
 		{
 			var warehouse = new Warehouse();
@@ -35,7 +39,34 @@ namespace WarehouseCore.Tests
 		}
 
 		[Fact]
+		[Trait("Function", "Signing")]
 		public void PayloadSigningShouldRoundtrip()
+		{
+			var warehouse = new Warehouse();
+			warehouse.Initialize();
+
+			var payload = Enumerable.Range(1, 500).Select(i => $"record{i}-{Guid.NewGuid()}").ToArray();
+
+			var key = "item1";
+			var scope = new ApplicationScope("TestApp");
+
+			Stopwatch timer = new Stopwatch();
+
+			timer.Start();
+			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
+			var returnedValue = warehouse.Retrieve(key, scope).ToList();
+			warehouse.Verify(returnedValue, receipt.SHA256Checksum).Should().BeTrue();
+			timer.Stop();
+
+			// the amount of time to store, and retrieve a few kilobytes
+			output.WriteLine($"Runtime was {Encoding.UTF8.GetByteCount(payload.SelectMany(st => st).ToArray())} bytes in {timer.ElapsedMilliseconds}.");
+			timer.ElapsedMilliseconds.Should().BeLessThan(100);
+		}
+
+		[Fact]
+		[Trait("Category","Performance")]
+		[Trait("Function", "Signing")]
+		public void PayloadSigningShouldRoundtripQuickly()
 		{
 			var warehouse = new Warehouse();
 			warehouse.Initialize();
@@ -49,11 +80,11 @@ namespace WarehouseCore.Tests
 			var returnedValue = warehouse.Retrieve(key, scope).ToList();
 
 			warehouse.Verify(returnedValue, receipt.SHA256Checksum).Should().BeTrue();
-
-			//receipt.SHA256Checksum.Should().Be( )
 		}
 
 		[Fact]
+		[Trait("Type", "Warehouse")]
+		[Trait("Function", "StoreAndRetrieve")]
 		public void MemoryWarehouseShouldStoreAndReturnAndAppendAndReturnPallet()
 		{
 			var warehouse = new Warehouse();
@@ -80,6 +111,9 @@ namespace WarehouseCore.Tests
 		}
 
 		[Fact]
+		[Trait("Function", "StoreAndRetrieve")]
+		[Trait("Category", "Performance")]
+		[Trait("Facet", "Mult-Threading")]
 		public void MultiThreadedWriteReadPerformanceTest()
 		{
 			var warehouse = new Warehouse();
@@ -95,6 +129,9 @@ namespace WarehouseCore.Tests
 		}
 
 		[Fact]
+		[Trait("Function", "StoreAndRetrieve")]
+		[Trait("Category", "Performance")]
+		[Trait("Facet", "Mult-Threading")]
 		public void MultiThreadedAppendReadPerformanceTest()
 		{
 			var warehouse = new Warehouse();
@@ -112,6 +149,8 @@ namespace WarehouseCore.Tests
 		}
 
 		[Fact]
+		[Trait("Function", "StoreAndRetrieve")]
+		[Trait("Category", "Performance")]
 		public void MultiThreadedAppendReadToOneKeyPerformanceTest()
 		{
 			var warehouse = new Warehouse();

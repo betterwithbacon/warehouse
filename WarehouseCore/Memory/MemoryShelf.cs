@@ -13,7 +13,7 @@ namespace WarehouseCore
 
 		public bool CanRetrieve(string key, IStorageScope scope)
 		{
-			return Records[new MemoryShelfKey(scope, key)] != null;
+			return Records.Keys.Contains(new MemoryShelfKey(scope, key));
 		}
 
 		public IEnumerable<string> Retrieve(string key, IStorageScope scope)
@@ -45,6 +45,19 @@ namespace WarehouseCore
 			{
 				ScopeIdentifier = scope.Identifier;
 				Key = key;
+			}
+
+			public override bool Equals(object obj)
+			{
+				if (obj is MemoryShelfKey msk)
+					return msk.GetHashCode() == this.GetHashCode();
+				else
+					return false;
+			}
+
+			public override int GetHashCode()
+			{
+				return HashCode.Combine<string, string>(ScopeIdentifier, Key);
 			}
 		}
 	}
