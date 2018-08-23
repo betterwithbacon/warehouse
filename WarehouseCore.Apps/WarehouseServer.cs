@@ -25,7 +25,7 @@ namespace WarehouseCore.Apps
 		protected override void OnAfterStart()
 		{
 			// schedule some work to be done
-			busDriver.AddSchedule(new Schedule { }, (time) => { PerformStorageMaintenance(time); });
+			busDriver.AddScheduledAction(new Schedule { }, (time) => { PerformStorageMaintenance(time); });
 
 			// populate the remote warehouses			
 			LoadRemoteWarehouses();
@@ -33,14 +33,18 @@ namespace WarehouseCore.Apps
 
 		private void LoadRemoteWarehouses()
 		{
-			// the Lighthouse context should know about the other services that are running
-			foreach (var remoteWarehouseServer in Context.FindServices<WarehouseServer>())
-				RemoteWarehouseServers.Add(remoteWarehouseServer);
+			// the container is how remote lighthouse resources are found
+			if (LighthouseContainer != null)
+			{
+				// the Lighthouse context should know about the other services that are running
+				foreach (var remoteWarehouseServer in LighthouseContainer.FindServices<WarehouseServer>())
+					RemoteWarehouseServers.Add(remoteWarehouseServer);
 
-			// this is where an network discovery will occur. to reach other points, not local to this lighthouse runtime.
-			// currently, this isn't implemented, but ideally
-			foreach (var remoteWarehouseServer in Context.FindRemoteServices<WarehouseServer>())
-				RemoteWarehouseServers.Add(remoteWarehouseServer);
+				// this is where an network discovery will occur. to reach other points, not local to this lighthouse runtime.
+				// currently, this isn't implemented, but ideally
+				foreach (var remoteWarehouseServer in LighthouseContainer.FindRemoteServices<WarehouseServer>())
+					RemoteWarehouseServers.Add(remoteWarehouseServer);
+			}
 		}
 
 		public IEnumerable<IShelf> ResolveShelves(IEnumerable<LoadingDockPolicy> policies)
@@ -70,7 +74,6 @@ namespace WarehouseCore.Apps
 		{
 			// when items are stored, store them in the local warehouse. Policy syncing will happen somewhere else
 			warehouse.Append(key, scope, data, loadingDockPolicies);
-
 		}
 
 		public IEnumerable<string> Retrieve(string key, IStorageScope scope)

@@ -19,11 +19,14 @@ namespace WarehouseCore.Apps.Tests
 
 		[Fact]
 		[Trait("Type", "WarehouseServer")]
-		public void ValidService_StartsUpCorrectly()
+		public void Start_StartsUpCorrectly()
 		{
+			var lighthouse = new LighthouseServer(Output.WriteLine);
+			lighthouse.Start();
+
 			var server = new WarehouseServer();
 			server.StatusUpdated += Server_StatusUpdated;
-
+			server.Initialize(lighthouse);
 			server.Start();
 
 			server.RunState.Should().Be(LighthouseServiceRunState.Running);
@@ -31,13 +34,13 @@ namespace WarehouseCore.Apps.Tests
 
 		[Fact]
 		[Trait("Type", "WarehouseServer")]
-		public void ValidService_DiscoverLocalInMemoryStorage()
+		public void ResolveShelves_DiscoverLocalInMemoryStorage()
 		{
-			var context = new LighthouseServer(Output.WriteLine);
-			context.Start();
+			var lighthouse = new LighthouseServer(Output.WriteLine);
+			lighthouse.Start();
 			var warehouseServer = new WarehouseServer();
-			// bind the warehouserServer to the context
-			context.Launch(warehouseServer);
+			// bind the warehouserServer to the lighthouseServer
+			lighthouse.Launch(warehouseServer);
 
 			// get a shelf that can hold data for the duration of the session			
 			var remoteShelves = warehouseServer.ResolveShelves(new[] { LoadingDockPolicy.Ephemeral });
@@ -46,18 +49,18 @@ namespace WarehouseCore.Apps.Tests
 			remoteShelves.OfType<MemoryShelf>().Count().Should().Be(1);
 
 			// no exceptions should have been thrown
-			context.GetRunningServices().Where(lsr => lsr.Exceptions.Count > 0).Should().BeEmpty();
+			lighthouse.GetRunningServices().Where(lsr => lsr.Exceptions.Count > 0).Should().BeEmpty();
 		}
 
 		[Fact]
 		[Trait("Type", "WarehouseServer")]
-		public void ValidService_StoreAndRetrieve()
+		public void StoreAndRetrieve_ReturnsDataCorrectly()
 		{
-			var context = new LighthouseServer(Output.WriteLine);
-			context.Start();
+			var lighthouseServer = new LighthouseServer(Output.WriteLine);
+			lighthouseServer.Start();
 			var warehouseServer = new WarehouseServer();
-			// bind the warehouserServer to the context
-			context.Launch(warehouseServer);
+			// bind the warehouserServer to the lighthouseServer
+			lighthouseServer.Launch(warehouseServer);
 
 			// get a shelf that can hold data for the duration of the session	
 			var payload = new[] { "data" };
@@ -65,6 +68,25 @@ namespace WarehouseCore.Apps.Tests
 
 			var retrievedValues = warehouseServer.Retrieve("test", StorageScope.Global);
 			payload.Should().BeEquivalentTo(payload);
+		}
+
+		[Fact]
+		[Trait("Type", "WarehouseServer")]
+		public void ResolveShelves_FoundShelfFromOtherWarehouseServerInTheSameLighthouseServer()
+		{
+			var lighthouseServer = new LighthouseServer(Output.WriteLine);
+			lighthouseServer.Start();
+			var warehouseServer = new WarehouseServer();			
+			lighthouseServer.Launch(warehouseServer);
+						
+			var otherWarehouseServer = new WarehouseServer();
+			lighthouseServer.Launch(otherWarehouseServer);
+
+			// get a shelf that can hold data for the duration of the session	
+			var resolvedShelves = warehouseServer.ResolveShelves(new[] { LoadingDockPolicy.Ephemeral });
+			
+			// the OTHER warehosue, should also have a memory shelf, that we can store data with.
+			resolvedShelves.Count().Should().Be(2);
 		}
 
 		private void Server_StatusUpdated(ILighthouseComponent owner, string status)

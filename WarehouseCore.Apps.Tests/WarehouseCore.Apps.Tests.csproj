@@ -19,6 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="BusDriver.Core">
+      <HintPath>..\dependencies\BusDriver.Core.dll</HintPath>
+    </Reference>
     <Reference Include="Lighthouse.Core">
       <HintPath>..\dependencies\Lighthouse.Core.dll</HintPath>
     </Reference>
