@@ -2,7 +2,9 @@ using FluentAssertions;
 using Lighthouse.Core;
 using Lighthouse.Server;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -82,9 +84,33 @@ namespace WarehouseCore.Apps.Tests
 			var otherWarehouseServer = new WarehouseServer();
 			lighthouseServer.Launch(otherWarehouseServer);
 
+			// wait, to give time to let this run
+			Thread.Sleep(100);
 			// get a shelf that can hold data for the duration of the session	
 			var resolvedShelves = warehouseServer.ResolveShelves(new[] { LoadingDockPolicy.Ephemeral });
 			
+			// the OTHER warehosue, should also have a memory shelf, that we can store data with.
+			resolvedShelves.Count().Should().Be(2);
+		}
+
+		[Fact]
+		[Trait("Type", "WarehouseServer")]
+		public void RemoteWarehouse_Store_ItemStoredOnOtherWarehouseServer()
+		{
+			var lighthouseServer = new LighthouseServer(Output.WriteLine);
+			lighthouseServer.Start();
+			var warehouseServer = new WarehouseServer();
+			lighthouseServer.Launch(warehouseServer);
+
+			var otherWarehouseServer = new WarehouseServer();
+			lighthouseServer.Launch(otherWarehouseServer);
+
+			// wait, to give time to let this run
+			Thread.Sleep(100);
+
+			// get a shelf that can hold data for the duration of the session	
+			var resolvedShelves = warehouseServer.ResolveShelves(new[] { LoadingDockPolicy.Ephemeral });
+
 			// the OTHER warehosue, should also have a memory shelf, that we can store data with.
 			resolvedShelves.Count().Should().Be(2);
 		}
@@ -93,5 +119,22 @@ namespace WarehouseCore.Apps.Tests
 		{
 			Output.WriteLine($"{owner}:{status}");
 		}
+
+		//public class TestEnvironment
+		//{
+		//	public readonly List<LighthouseServer> LighthouseServers = new List<LighthouseServer>();
+
+
+		//}
+
+		//public static class TestEnvironentExtensions
+		//{
+		//	public static TestEnvironment AddLighthouseServer(this TestEnvironment environment, bool start = true)
+		//	{
+		//		var server = new LighthouseServer();
+		//		environment.LighthouseServers.Add()
+		//		return this;
+		//	}
+		//}
 	}
 }

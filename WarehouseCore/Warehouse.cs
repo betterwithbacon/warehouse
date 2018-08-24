@@ -85,6 +85,11 @@ namespace WarehouseCore
 			return Shelves.Where(s => s.CanEnforcePolicies(loadingDockPolicies));
 		}
 
+		public IEnumerable<IShelf> ResolveLocalShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
+		{
+			return ResolveShelves(loadingDockPolicies);
+		}
+
 		void ThrowIfNotInitialized()
 		{
 			if (!IsInitialized)
@@ -108,5 +113,7 @@ namespace WarehouseCore
 		{
 			return GetSHA256Checksum(input).Equals(hash, StringComparison.OrdinalIgnoreCase);
 		}
+
+
 	}
 }

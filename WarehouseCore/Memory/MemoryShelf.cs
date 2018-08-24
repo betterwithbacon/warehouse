@@ -11,6 +11,8 @@ namespace WarehouseCore
 		private static readonly ConcurrentDictionary<MemoryShelfKey, List<string>> Records = new ConcurrentDictionary<MemoryShelfKey, List<string>>();
 		public static readonly IList<LoadingDockPolicy> SupportedPolicies = new[] {  LoadingDockPolicy.Ephemeral };
 
+		public string Identifier => Guid.NewGuid().ToString();
+
 		public bool CanRetrieve(string key, IStorageScope scope)
 		{
 			return Records.Keys.Contains(new MemoryShelfKey(scope, key));
@@ -34,6 +36,16 @@ namespace WarehouseCore
 		public bool CanEnforcePolicies(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
 			return SupportedPolicies.Intersect(loadingDockPolicies).Any();
+		}
+
+		public bool Equals(IShelf x, IShelf y)
+		{
+			return x.Identifier == y.Identifier;
+		}
+
+		public int GetHashCode(IShelf obj)
+		{
+			return obj.GetHashCode();
 		}
 
 		struct MemoryShelfKey

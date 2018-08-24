@@ -12,7 +12,6 @@ namespace WarehouseCore.Apps
 	{
 		private readonly Warehouse warehouse = new Warehouse(initImmediately: false);
 		private readonly ConcurrentBag<WarehouseServer> RemoteWarehouseServers = new ConcurrentBag<WarehouseServer>();
-		private readonly EventContext busDriver = new EventContext();
 
 		public IEnumerable<IWarehouse<string, string>> AllWarehouses => RemoteWarehouseServers.SelectMany(ws => ws.AllWarehouses).Concat(new[] { warehouse });
 
@@ -25,7 +24,7 @@ namespace WarehouseCore.Apps
 		protected override void OnAfterStart()
 		{
 			// schedule some work to be done
-			busDriver.AddScheduledAction(new Schedule { }, (time) => { PerformStorageMaintenance(time); });
+			LighthouseContainer.EventContext.AddScheduledAction(new Schedule { }, (time) => { PerformStorageMaintenance(time); });
 
 			// populate the remote warehouses			
 			LoadRemoteWarehouses();
@@ -36,18 +35,39 @@ namespace WarehouseCore.Apps
 			// the container is how remote lighthouse resources are found
 			if (LighthouseContainer != null)
 			{
+				LighthouseContainer.Log(Lighthouse.Core.Logging.LogLevel.Debug, this, "Loading remote warehouses.");
+
 				// the Lighthouse context should know about the other services that are running
 				foreach (var remoteWarehouseServer in LighthouseContainer.FindServices<WarehouseServer>())
+				{
+					// skip THIS service.
+					if (remoteWarehouseServer.Id == this.Id)
+						continue;
+
 					RemoteWarehouseServers.Add(remoteWarehouseServer);
+					LighthouseContainer.Log(Lighthouse.Core.Logging.LogLevel.Debug, this, $"Container local warehouse {remoteWarehouseServer} was added.");
+				}
 
 				// this is where an network discovery will occur. to reach other points, not local to this lighthouse runtime.
 				// currently, this isn't implemented, but ideally
 				foreach (var remoteWarehouseServer in LighthouseContainer.FindRemoteServices<WarehouseServer>())
+				{
+					// skip THIS service.
+					if (remoteWarehouseServer.Id == this.Id)
+						continue;
+
 					RemoteWarehouseServers.Add(remoteWarehouseServer);
+					LighthouseContainer.Log(Lighthouse.Core.Logging.LogLevel.Debug, this, $"Remote warehouse {remoteWarehouseServer} was added.");
+				}
 			}
 		}
 
 		public IEnumerable<IShelf> ResolveShelves(IEnumerable<LoadingDockPolicy> policies)
+		{
+			return AllWarehouses.SelectMany(war => war.ResolveShelves(policies));
+		}
+
+		public IEnumerable<IShelf> ResolveRemoteShelves(IEnumerable<LoadingDockPolicy> policies)
 		{
 			return AllWarehouses.SelectMany(war => war.ResolveShelves(policies));
 		}
