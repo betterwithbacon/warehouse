@@ -100,5 +100,10 @@ namespace WarehouseCore.Apps
 		{
 			return warehouse.Retrieve(key, scope);
 		}
+
+		public WarehouseKeyManifest GetManifest(string key, IStorageScope scope)
+		{
+			return warehouse.GetManifest(key, scope);
+		}
 	}
 }

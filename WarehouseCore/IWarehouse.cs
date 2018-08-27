@@ -10,5 +10,6 @@ namespace WarehouseCore
 		Receipt Store(TKey key, IStorageScope scope, IList<TData> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies);		
 		void Append(TKey key, IStorageScope scope, IEnumerable<TData> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies);
 		IEnumerable<TData> Retrieve(TKey key, IStorageScope scope);
+		WarehouseKeyManifest GetManifest(TKey key, IStorageScope scope);
 	}
 }

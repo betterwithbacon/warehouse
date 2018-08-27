@@ -38,30 +38,29 @@ namespace WarehouseCore
 
 			var uuid = Guid.NewGuid();
 
+			ConcurrentBag<LoadingDockPolicy> enforcedPolicies = new ConcurrentBag<LoadingDockPolicy>();
+
 			// resolve the appropriate store, based on the policy
 			Parallel.ForEach(ResolveShelves(loadingDockPolicies), (shelf) =>
 			{
-				shelf.Store(key, scope, data);
+				shelf.Store(key, scope, data, enforcedPolicies);
 			});
 
 			// the receipt is largely what was passed in when it was stored
-			var receipt = new Receipt
+			var receipt = new Receipt(enforcedPolicies.Any())
 			{
 				UUID = uuid,
 				Key = key,
 				Scope = scope,
-				Policies = loadingDockPolicies.ToList(),
-				SHA256Checksum = GetSHA256Checksum(data)
+				// add the policies that were upheld during the store, this is necessary, 
+				// because this warehouse might not be able to satisfy all of the policies
+				Policies = enforcedPolicies.Distinct().ToList(),
+				SHA256Checksum = CalculateChecksum(data)				
 			};
 
 			SessionReceipts.Add(receipt);
 
 			return receipt;
-		}
-
-		public bool Verify(List<string> returnedValue, string sHA256Checksum)
-		{
-			return true;	
 		}
 
 		public void Append(string key, IStorageScope scope, IEnumerable<string> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
@@ -77,7 +76,7 @@ namespace WarehouseCore
 		public IEnumerable<string> Retrieve(string key, IStorageScope scope)
 		{
 			ThrowIfNotInitialized();
-			return Shelves.FirstOrDefault(shelf => shelf.CanRetrieve(key, scope))?.Retrieve(key, scope) ?? Enumerable.Empty<string>();
+			return Shelves.FirstOrDefault(shelf => shelf.CanRetrieve(key, scope))?.Retrieve(key, scope) ?? Enumerable.Empty<string>();						
 		}
 
 		public IEnumerable<IShelf> ResolveShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
@@ -85,10 +84,10 @@ namespace WarehouseCore
 			return Shelves.Where(s => s.CanEnforcePolicies(loadingDockPolicies));
 		}
 
-		public IEnumerable<IShelf> ResolveLocalShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
-		{
-			return ResolveShelves(loadingDockPolicies);
-		}
+		//public IEnumerable<IShelf> ResolveLocalShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
+		//{
+		//	return ResolveShelves(loadingDockPolicies);
+		//}
 
 		void ThrowIfNotInitialized()
 		{
@@ -96,7 +95,7 @@ namespace WarehouseCore
 				throw new InvalidOperationException("Warehouse not initialized.");
 		}
 
-		static string GetSHA256Checksum(IList<string> input)
+		public static string CalculateChecksum(IList<string> input)
 		{
 			using (var sha256 = SHA256.Create())
 			{
@@ -109,11 +108,26 @@ namespace WarehouseCore
 			}
 		}
 
-		static bool VerifySHA256Checksum(IList<string> input, string hash)
+		public static bool VerifyChecksum(IList<string> input, string hash)
 		{
-			return GetSHA256Checksum(input).Equals(hash, StringComparison.OrdinalIgnoreCase);
+			return CalculateChecksum(input).Equals(hash);
 		}
 
+		public WarehouseKeyManifest GetManifest(string key, IStorageScope scope)
+		{
+			// right now, we just return the data that was sent when it was created
+			var policies = SessionReceipts.FirstOrDefault(sr => sr.Key == key)?.Policies;
 
+			// if there aren't any receipts for this, the warehouse has no idea where they're stored. 
+			// TODO: ideally, the warehouse will eventually be able to resolve the receipts from their state
+			if (policies == null)
+				return new WarehouseKeyManifest();
+				
+			return new WarehouseKeyManifest
+			{
+				StorageShelvesManifests = ResolveShelves(policies).Where(s => s.CanRetrieve(key, scope)).Select( shelf => shelf.GetManifest(key, scope)).ToList(),
+				StoragePolicies = policies
+			};	
+		}
 	}
 }

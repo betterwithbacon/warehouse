@@ -30,7 +30,6 @@ namespace WarehouseCore.Tests
 			var key = "item1";
 			var scope = new ApplicationScope("TestApp");
 
-			var policy = new LoadingDockPolicy();
 			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
 
 			var returnedValue = warehouse.Retrieve(key, scope).ToList();
@@ -55,7 +54,7 @@ namespace WarehouseCore.Tests
 			timer.Start();
 			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
 			var returnedValue = warehouse.Retrieve(key, scope).ToList();
-			warehouse.Verify(returnedValue, receipt.SHA256Checksum).Should().BeTrue();
+			Warehouse.VerifyChecksum(returnedValue, receipt.SHA256Checksum).Should().BeTrue();
 			timer.Stop();
 
 			// the amount of time to store, and retrieve a few kilobytes
@@ -79,7 +78,7 @@ namespace WarehouseCore.Tests
 
 			var returnedValue = warehouse.Retrieve(key, scope).ToList();
 
-			warehouse.Verify(returnedValue, receipt.SHA256Checksum).Should().BeTrue();
+			Warehouse.VerifyChecksum(returnedValue, receipt.SHA256Checksum).Should().BeTrue();
 		}
 
 		[Fact]
@@ -94,7 +93,6 @@ namespace WarehouseCore.Tests
 			var key = "item1";
 			var scope = new ApplicationScope("TestApp");
 
-			var policy = new LoadingDockPolicy();
 			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
 
 			var returnedValue = warehouse.Retrieve(key, scope).ToList();
@@ -168,6 +166,14 @@ namespace WarehouseCore.Tests
 				});
 
 			warehouse.Retrieve(key, appScope).Count().Should().Be(101);
+		}
+
+		[Fact]
+		[Trait("Function", "StoreAndRetrieve")]
+		[Trait("Category", "Performance")]
+		public void GetGetManifest_SizeAndPoliciesMatches()
+		{
+			Assert.False(true);
 		}
 	}
 }

@@ -1,8 +1,6 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Lighthouse.Core;
 using Lighthouse.Server;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Xunit;
@@ -10,11 +8,11 @@ using Xunit.Abstractions;
 
 namespace WarehouseCore.Apps.Tests
 {
-	public class WarehouserServerTests
+	public class WarehouseServerTests
 	{
 		private readonly ITestOutputHelper Output;
 
-		public WarehouserServerTests(ITestOutputHelper output)
+		public WarehouseServerTests(ITestOutputHelper output)
 		{
 			Output = output;
 		}
@@ -72,8 +70,12 @@ namespace WarehouseCore.Apps.Tests
 			payload.Should().BeEquivalentTo(payload);
 		}
 
+
+
 		[Fact]
-		[Trait("Type", "WarehouseServer")]
+		[Trait(TestTraits.Type, "WarehouseServer")]
+		[Trait(TestTraits.Function, "ResolveShelves")]
+		[Trait(TestTraits.Tag, TestTraits.Tags.WarehouseServer)]
 		public void ResolveShelves_FoundShelfFromOtherWarehouseServerInTheSameLighthouseServer()
 		{
 			var lighthouseServer = new LighthouseServer(Output.WriteLine);
@@ -94,7 +96,9 @@ namespace WarehouseCore.Apps.Tests
 		}
 
 		[Fact]
-		[Trait("Type", "WarehouseServer")]
+		[Trait(TestTraits.Type, "WarehouseServer")]
+		[Trait(TestTraits.Function, "Store")]
+		[Trait(TestTraits.Tag, TestTraits.Tags.WarehouseServer)]
 		public void RemoteWarehouse_Store_ItemStoredOnOtherWarehouseServer()
 		{
 			var lighthouseServer = new LighthouseServer(Output.WriteLine);
@@ -120,21 +124,6 @@ namespace WarehouseCore.Apps.Tests
 			Output.WriteLine($"{owner}:{status}");
 		}
 
-		//public class TestEnvironment
-		//{
-		//	public readonly List<LighthouseServer> LighthouseServers = new List<LighthouseServer>();
 
-
-		//}
-
-		//public static class TestEnvironentExtensions
-		//{
-		//	public static TestEnvironment AddLighthouseServer(this TestEnvironment environment, bool start = true)
-		//	{
-		//		var server = new LighthouseServer();
-		//		environment.LighthouseServers.Add()
-		//		return this;
-		//	}
-		//}
-	}
+		}
 }
