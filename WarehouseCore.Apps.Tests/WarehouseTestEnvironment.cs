@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace WarehouseCore.Apps.Tests
 {
@@ -42,6 +43,7 @@ namespace WarehouseCore.Apps.Tests
 			Log($"[CONFIG] Adding warehouse server. {warehouseServer}");
 
 			LighthouseServer?.Launch(warehouseServer);
+			Thread.Sleep(100);
 			return this;
 		}
 

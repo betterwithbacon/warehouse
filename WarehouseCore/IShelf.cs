@@ -5,16 +5,18 @@ using System.Text;
 
 namespace WarehouseCore
 {
-	public interface IShelf : IEqualityComparer<IShelf>
+	public interface IShelf<TKey,TData> : IEqualityComparer<IShelf<TKey, TData>>
 	{
+		void Initialize(IWarehouse<TKey, TData> warehouse);
+
 		string Identifier { get; }
-		void Append(string key, IStorageScope scope, IEnumerable<string> additionalPayload);
-		void Store(string key, IStorageScope scope, IEnumerable<string> payload, IProducerConsumerCollection<LoadingDockPolicy> enforcedPolicies);
-		IEnumerable<string> Retrieve(string key, IStorageScope scope);
+		void Append(TKey key, IStorageScope scope, IEnumerable<TData> additionalPayload);
+		void Store(TKey key, IStorageScope scope, IEnumerable<TData> payload, IProducerConsumerCollection<LoadingDockPolicy> enforcedPolicies);
+		IEnumerable<TData> Retrieve(TKey key, IStorageScope scope);
 
 		bool CanRetrieve(string key, IStorageScope scope);
 		bool CanEnforcePolicies(IEnumerable<LoadingDockPolicy> loadingDockPolicies);
 		
-		ShelfManifest GetManifest(string key, IStorageScope scope);
+		ShelfManifest GetManifest(TKey key, IStorageScope scope);
 	}
 }

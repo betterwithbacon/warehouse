@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace WarehouseCore
 {
-	public class MemoryShelf : IShelf
+	public class MemoryShelf : IShelf<string,string>
 	{
 		private static readonly ConcurrentDictionary<MemoryShelfKey, List<string>> Records = new ConcurrentDictionary<MemoryShelfKey, List<string>>();
 		public static readonly IList<LoadingDockPolicy> SupportedPolicies = new[] {  LoadingDockPolicy.Ephemeral };
@@ -38,30 +38,22 @@ namespace WarehouseCore
 
 		public bool CanEnforcePolicies(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
-			bool canEnforceAnyPolicies = false;
-
-			var verificationTasks = loadingDockPolicies.Select(ldp => Task.Factory.StartNew( () =>ldp.IsEquivalentTo( )
-
-			//foreach(var policy in SupportedPolicies)
-			//{
-			//	foreach (var requestedPolicy in loadingDockPolicies)
-			//	{
-			//		policy.IsEquivalentTo(requestedPolicy);
-			//	}
-			//}
-
-			return canEnforceAnyPolicies;
-			//return SupportedPolicies.Any( ldp => ldp.IsEquivalentTo( loadingDockPolicies ).Any();
+			return SupportedPolicies.Any(
+				sp => loadingDockPolicies.Any(
+					ldp => ldp.IsEquivalentTo(sp)
+				)
+			);	
 		}
 
-		public bool Equals(IShelf x, IShelf y)
+		public bool Equals(IShelf<string,string> x, IShelf<string, string> y)
 		{
 			return x.Identifier == y.Identifier;
 		}
 
-		public int GetHashCode(IShelf obj)
+		public int GetHashCode(IShelf<string, string> obj)
 		{
-			return obj.GetHashCode();
+			// TODO: this is TERRIBLE, because it means that another shelf with the same ID, could be confused for this one
+			return obj.Identifier.GetHashCode();
 		}
 
 		public ShelfManifest GetManifest(string key, IStorageScope scope)
@@ -85,6 +77,11 @@ namespace WarehouseCore
 			return size;
 		}
 
+		public void Initialize(IWarehouse<string, string> warehouse)
+		{
+			// There's no init work for a memshelf
+		}
+		
 		struct MemoryShelfKey
 		{
 			public string ScopeIdentifier { get; }

@@ -62,15 +62,15 @@ namespace WarehouseCore.Apps
 			}
 		}
 
-		public IEnumerable<IShelf> ResolveShelves(IEnumerable<LoadingDockPolicy> policies)
+		public IEnumerable<IShelf<string, string>> ResolveShelves(IEnumerable<LoadingDockPolicy> policies)
 		{
 			return AllWarehouses.SelectMany(war => war.ResolveShelves(policies));
 		}
 
-		public IEnumerable<IShelf> ResolveRemoteShelves(IEnumerable<LoadingDockPolicy> policies)
-		{
-			return AllWarehouses.SelectMany(war => war.ResolveShelves(policies));
-		}
+		//public IEnumerable<IShelf<string, string>> ResolveRemoteShelves(IEnumerable<LoadingDockPolicy> policies)
+		//{
+		//	return AllWarehouses.SelectMany(war => war.ResolveShelves(policies));
+		//}
 
 		private void PerformStorageMaintenance(DateTime date)
 		{

@@ -7,7 +7,7 @@ namespace WarehouseCore
 	/// <summary>
 	/// A descriptor to describe how data might be stored. A given quantum of data might have multiple policies affecting it.
 	/// </summary>
-    public class LoadingDockPolicy :IEqualityComparer<LoadingDockPolicy>, IEquatable<LoadingDockPolicy>
+    public class LoadingDockPolicy :IEqualityComparer<LoadingDockPolicy>
     {
 		public static readonly LoadingDockPolicy Persistent;
 		public static readonly LoadingDockPolicy Archival;
@@ -32,6 +32,15 @@ namespace WarehouseCore
 		/// After data is stored, the policies can/will change multiple times, so while data might start as ephemeral, the policies might change progressively over the course of one or multiple sessions.		
 		/// </summary>
 		public int RetrievalTimeout { get; private set; }
+
+		public bool IsEquivalentTo(LoadingDockPolicy requestedPolicy)
+		{
+			return
+				requestedPolicy.Archive == this.Archive &&
+				requestedPolicy.SessionScope == this.SessionScope &&
+				Math.Abs(requestedPolicy.TimeToLive - this.TimeToLive) == 0 && // if the policy TTL is less than or equal to this policy. So that this policy is a superset
+				Math.Abs(requestedPolicy.RetrievalTimeout - this.RetrievalTimeout) == 0;
+		}
 
 		/// <summary>
 		/// Indicates that this data should be archived.
@@ -99,7 +108,8 @@ namespace WarehouseCore
 
 		public int GetHashCode(LoadingDockPolicy obj)
 		{
-			return HashCode.Combine<string,>
+			return HashCode.Combine(
+				this.Archive, this.SessionScope, this.TimeToLive, this.RetrievalTimeout);
 		}
 	}
 }

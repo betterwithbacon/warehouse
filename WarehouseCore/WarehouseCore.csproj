@@ -12,7 +12,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Folder Include="Disk\" />
 	  <Folder Include="Cloud\" />
 	  <Folder Include="Network\" />
 	</ItemGroup>

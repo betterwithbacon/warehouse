@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ namespace WarehouseCore
 	public class Warehouse : IWarehouse<string,string>
 	{
 		public readonly List<Receipt> SessionReceipts = new List<Receipt>();
-		readonly ConcurrentBag<IShelf> Shelves = new ConcurrentBag<IShelf>();
+		readonly ConcurrentBag<IShelf<string, string>> Shelves = new ConcurrentBag<IShelf<string, string>>();
 
 		private bool IsInitialized => Shelves.Count > 0;
 
@@ -27,9 +28,22 @@ namespace WarehouseCore
 			if (IsInitialized)
 				return;
 
-			// pre-seed the shelves with all available storage types
-			var newShelf = new MemoryShelf();
-			Shelves.Add(newShelf);
+			// Discover shelf types
+			foreach (var shelf in DiscoverShelves())
+			{
+				Shelves.Add(shelf);
+				shelf.Initialize(this);
+			}
+		}
+
+		public IEnumerable<IShelf<string,string>> DiscoverShelves()
+		{
+			yield return new MemoryShelf();
+
+			foreach (var type in AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(t => typeof(IShelf<string, string>).IsAssignableFrom(t) && t.IsClass))
+			{
+				yield return Activator.CreateInstance(type) as IShelf<string, string>;
+			}
 		}
 
 		public Receipt Store(string key, IStorageScope scope, IList<string> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
@@ -79,7 +93,7 @@ namespace WarehouseCore
 			return Shelves.FirstOrDefault(shelf => shelf.CanRetrieve(key, scope))?.Retrieve(key, scope) ?? Enumerable.Empty<string>();						
 		}
 
-		public IEnumerable<IShelf> ResolveShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
+		public IEnumerable<IShelf<string, string>> ResolveShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
 			return Shelves.Where(s => s.CanEnforcePolicies(loadingDockPolicies));
 		}
