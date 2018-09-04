@@ -9,7 +9,7 @@ namespace WarehouseCore
 		/// <summary>
 		/// Places the warehouse in a state where it can store and retrieve data
 		/// </summary>
-		void Initialize();
+		void Initialize(params Type[] shelfTypes);
 
 		/// <summary>
 		/// Stores the provided data, with the relevant key

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using WarehouseCore.Disk;
 
 namespace WarehouseCore.Apps
 {
@@ -17,8 +18,10 @@ namespace WarehouseCore.Apps
 
 		protected override void OnStart()
 		{
-			// start a local warehouse
-			warehouse.Initialize();
+			// start a local warehouse			
+			warehouse.Initialize(
+				typeof(LocalDiskShelf)
+			);
 		}
 
 		protected override void OnAfterStart()
@@ -71,7 +74,7 @@ namespace WarehouseCore.Apps
 		{
 		}
 
-		void IWarehouse.Initialize()
+		void IWarehouse.Initialize(params Type[] shelvesToUse)
 		{
 			throw new NotImplementedException("This warehouse server should be initialized within a lighthouse context.");
 		}
@@ -94,11 +97,6 @@ namespace WarehouseCore.Apps
 		public IEnumerable<T> Retrieve<T>(WarehouseKey key)
 		{
 			return warehouse.Retrieve<T>(key);
-		}
-
-		public void Initialize()
-		{
-			throw new NotImplementedException();
 		}
 
 		public WarehouseKeyManifest GetManifest(WarehouseKey key)

@@ -12,6 +12,9 @@ namespace WarehouseCore
 {
 	public class Warehouse : IWarehouse
 	{
+		// TODO: this is atemp solution to this problem of discoverying available shelf types
+		// ideally, this will be discovered by reflection
+		public static ConcurrentBag<Type> AvailableShelfTypes;
 		public readonly List<Receipt> SessionReceipts = new List<Receipt>();
 		readonly ConcurrentBag<IShelf> Shelves = new ConcurrentBag<IShelf>();
 
@@ -19,13 +22,27 @@ namespace WarehouseCore
 
 		private bool IsInitialized => Shelves.Count > 0;
 
+		static Warehouse()
+		{
+			AvailableShelfTypes = new ConcurrentBag<Type>();
+		}
+
+		public static void RegisterShelfType(Type shelfType)
+		{
+			if (shelfType.IsAssignableFrom(typeof(IShelf)) && shelfType.IsClass)
+				throw new ArgumentException("shelf type MUST be implement IShelf and be concrete.");
+
+			if (!AvailableShelfTypes.Contains(shelfType))
+				AvailableShelfTypes.Add(shelfType);
+		}
+
 		public Warehouse(bool initImmediately = true)
 		{
 			if(initImmediately)			
 				Initialize();			
 		}
 
-		public void Initialize()
+		public void Initialize(params Type[] shelvesToUse)
 		{
 			// only do this once
 			if (IsInitialized)
@@ -39,11 +56,23 @@ namespace WarehouseCore
 				// create all the shelves in the global scope
 				shelf.Initialize(this, StorageScope.Global);
 			}
+
+			foreach (var shelfType in shelvesToUse)
+			{
+				if (Activator.CreateInstance(shelfType) is IShelf shelf)
+				{
+					Shelves.Add(shelf);
+
+					// create all the shelves in the global scope
+					shelf.Initialize(this, StorageScope.Global);
+				}
+			}
 		}
 
 		public IEnumerable<IShelf> DiscoverShelves()
 		{
 			yield return new MemoryShelf();
+
 
 			//foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) //.SelectMany(a => a.GetTypes()).Where(t => typeof(IShelf).IsAssignableFrom(t) && t.IsClass))
 			//{
