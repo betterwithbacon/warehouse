@@ -16,6 +16,12 @@
 	  <Folder Include="Network\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Reference Include="Lighthouse.Core">
+	    <HintPath>..\dependencies\Lighthouse.Core.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
 
 
 </Project>

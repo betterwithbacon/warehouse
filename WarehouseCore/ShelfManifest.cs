@@ -5,7 +5,7 @@ namespace WarehouseCore
 	/// <summary>
 	/// Represents a simple manifest of a shelf. The manifest will be limited by Scope and, optionally, key
 	/// </summary>
-	public class ShelfManifest
+	public sealed class ShelfManifest
 	{
 		/// <summary>
 		/// The policies that are valid for either this

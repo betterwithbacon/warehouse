@@ -4,13 +4,47 @@ using System.Collections.Generic;
 
 namespace WarehouseCore
 {
-    public interface IWarehouse<TKey, TData> : ILighthouseComponent // : IDictionary<TKey, TData><-- one day!
+	public interface IWarehouse : ILighthouseComponent // : IDictionary<WarehouseKey, TData><-- one day!
 	{
+		/// <summary>
+		/// Places the warehouse in a state where it can store and retrieve data
+		/// </summary>
 		void Initialize();
-		IEnumerable<IShelf<TKey,TData>> ResolveShelves(IEnumerable<LoadingDockPolicy> loadingDockPolicies);
-		Receipt Store(TKey key, IStorageScope scope, IList<TData> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies);		
-		void Append(TKey key, IStorageScope scope, IEnumerable<TData> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies);
-		IEnumerable<TData> Retrieve(TKey key, IStorageScope scope);
-		WarehouseKeyManifest GetManifest(TKey key, IStorageScope scope);
+
+		/// <summary>
+		/// Stores the provided data, with the relevant key
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="key"></param>
+		/// <param name="data"></param>
+		/// <param name="loadingDockPolicies"></param>
+		/// <returns></returns>
+		Receipt Store<T>(WarehouseKey key, IEnumerable<T> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies);
+
+		/// <summary>
+		/// Appends data to the existing data 
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="key"></param>
+		/// <param name="data"></param>
+		/// <param name="loadingDockPolicies"></param>
+		void Append<T>(WarehouseKey key, IEnumerable<T> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies);
+
+		/// <summary>
+		/// Returns the Data for a given key and scope
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="key"></param>
+		/// <param name="scope"></param>
+		/// <returns></returns>
+		IEnumerable<T> Retrieve<T>(WarehouseKey key);
+
+		/// <summary>
+		/// Returns all of the available metadata for a given WarehouseKey.
+		/// </summary>
+		/// <param name="key"></param>
+		/// <param name="scope"></param>
+		/// <returns></returns>
+		WarehouseKeyManifest GetManifest(WarehouseKey key);
 	}
 }

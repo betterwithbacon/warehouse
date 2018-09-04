@@ -8,12 +8,12 @@ using System.Linq;
 
 namespace WarehouseCore.Apps
 {
-	public class WarehouseServer : LighthouseServiceBase, IWarehouse<string, string>
+	public class WarehouseServer : LighthouseServiceBase, IWarehouse
 	{
 		private readonly Warehouse warehouse = new Warehouse(initImmediately: false);
 		private readonly ConcurrentBag<WarehouseServer> RemoteWarehouseServers = new ConcurrentBag<WarehouseServer>();
 
-		public IEnumerable<IWarehouse<string, string>> AllWarehouses => RemoteWarehouseServers.SelectMany(ws => ws.AllWarehouses).Concat(new[] { warehouse });
+		public IEnumerable<Warehouse> AllWarehouses => RemoteWarehouseServers.SelectMany(ws => ws.AllWarehouses).Concat(new[] { warehouse });
 
 		protected override void OnStart()
 		{
@@ -62,12 +62,7 @@ namespace WarehouseCore.Apps
 			}
 		}
 
-		public IEnumerable<IShelf<string, string>> ResolveShelves(IEnumerable<LoadingDockPolicy> policies)
-		{
-			return AllWarehouses.SelectMany(war => war.ResolveShelves(policies));
-		}
-
-		//public IEnumerable<IShelf<string, string>> ResolveRemoteShelves(IEnumerable<LoadingDockPolicy> policies)
+		//public IEnumerable<IShelf> ResolveShelves(IEnumerable<LoadingDockPolicy> policies)
 		//{
 		//	return AllWarehouses.SelectMany(war => war.ResolveShelves(policies));
 		//}
@@ -76,34 +71,39 @@ namespace WarehouseCore.Apps
 		{
 		}
 
-		void IWarehouse<string, string>.Initialize()
+		void IWarehouse.Initialize()
 		{
 			throw new NotImplementedException("This warehouse server should be initialized within a lighthouse context.");
 		}
 
-		public Receipt Store(string key, IStorageScope scope, IList<string> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
+		public Receipt Store<T>(WarehouseKey key, IEnumerable<T> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
 			// when items are stored, store them in the local warehouse. Policy syncing will happen somewhere else
-			var receipt = warehouse.Store(key, scope, data, loadingDockPolicies);
+			var receipt = warehouse.Store(key, data, loadingDockPolicies);
 			RaiseStatusUpdated($"Data stored: {key}. Data Checksum: {receipt.SHA256Checksum}");
 
 			return receipt;
 		}
 
-		public void Append(string key, IStorageScope scope, IEnumerable<string> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
+		public void Append<T>(WarehouseKey key, IEnumerable<T> data, IEnumerable<LoadingDockPolicy> loadingDockPolicies)
 		{
 			// when items are stored, store them in the local warehouse. Policy syncing will happen somewhere else
-			warehouse.Append(key, scope, data, loadingDockPolicies);
+			warehouse.Append(key, data, loadingDockPolicies);
 		}
 
-		public IEnumerable<string> Retrieve(string key, IStorageScope scope)
+		public IEnumerable<T> Retrieve<T>(WarehouseKey key)
 		{
-			return warehouse.Retrieve(key, scope);
+			return warehouse.Retrieve<T>(key);
 		}
 
-		public WarehouseKeyManifest GetManifest(string key, IStorageScope scope)
+		public void Initialize()
 		{
-			return warehouse.GetManifest(key, scope);
+			throw new NotImplementedException();
+		}
+
+		public WarehouseKeyManifest GetManifest(WarehouseKey key)
+		{
+			return warehouse.GetManifest(key);
 		}
 	}
 }

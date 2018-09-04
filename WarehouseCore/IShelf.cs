@@ -5,18 +5,32 @@ using System.Text;
 
 namespace WarehouseCore
 {
-	public interface IShelf<TKey,TData> : IEqualityComparer<IShelf<TKey, TData>>
+	/// <summary>
+	/// Stores a particular type and scope of data
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	public interface IShelf<T> : IShelf, IEqualityComparer<IShelf<T>>
+	{	
+		// Storage operations
+		void Append(WarehouseKey key, IEnumerable<T> additionalPayload);
+		void Store(WarehouseKey key, IEnumerable<T> payload, IProducerConsumerCollection<LoadingDockPolicy> enforcedPolicies);
+		IEnumerable<T> Retrieve(WarehouseKey key);
+	}
+
+	public interface IShelf
 	{
-		void Initialize(IWarehouse<TKey, TData> warehouse);
+		void Initialize(IWarehouse warehouse, IStorageScope scope);
 
+		// Identification aspects
 		string Identifier { get; }
-		void Append(TKey key, IStorageScope scope, IEnumerable<TData> additionalPayload);
-		void Store(TKey key, IStorageScope scope, IEnumerable<TData> payload, IProducerConsumerCollection<LoadingDockPolicy> enforcedPolicies);
-		IEnumerable<TData> Retrieve(TKey key, IStorageScope scope);
+		IWarehouse Warehouse { get; }
+		IStorageScope Scope { get; }
 
-		bool CanRetrieve(string key, IStorageScope scope);
+		// Retrieval Operations
+		bool CanRetrieve(WarehouseKey key);
+		ShelfManifest GetManifest(WarehouseKey key);
+
+		// Discovery Operations
 		bool CanEnforcePolicies(IEnumerable<LoadingDockPolicy> loadingDockPolicies);
-		
-		ShelfManifest GetManifest(TKey key, IStorageScope scope);
 	}
 }

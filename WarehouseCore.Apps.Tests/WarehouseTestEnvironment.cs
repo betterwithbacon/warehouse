@@ -49,12 +49,13 @@ namespace WarehouseCore.Apps.Tests
 
 		public WarehouseTestEnvironment AssertStoragePolicy(string testPayloadKey, int warehouseIndex = 0)
 		{
+			var storeKey = new WarehouseKey(testPayloadKey, StorageScope);
 			var receipt = StorageReceipts[testPayloadKey];
 
 			if (receipt == null)
 				throw new ApplicationException("No receipt was found for test payloadf");
 
-			var manifest = WarehouseServers[warehouseIndex].GetManifest(testPayloadKey, StorageScope);
+			var manifest = WarehouseServers[warehouseIndex].GetManifest(storeKey);
 
 			Log($"[ASSERTION] Policies. Found: {string.Join(',',manifest.StoragePolicies)}. Expected: {string.Join(',', receipt.Policies)}");
 			
@@ -66,9 +67,9 @@ namespace WarehouseCore.Apps.Tests
 
 		public WarehouseTestEnvironment AssertStored(string testPayloadKey, string testPayload, int warehouseIndex = 0)
 		{
-			
+			var storeKey = new WarehouseKey(testPayloadKey, StorageScope);
 			var warehouse = WarehouseServers[warehouseIndex];
-			var retrievedData = warehouse.Retrieve(testPayloadKey, StorageScope);
+			var retrievedData = warehouse.Retrieve<string>(storeKey);
 			retrievedData.Should().NotBeEmpty();
 
 			// retrieve the receipt created when stored, and check the hashes (this is an overlap of other tests, but a bit of a sanity check)
@@ -81,11 +82,12 @@ namespace WarehouseCore.Apps.Tests
 			return this;
 		}
 
-		public WarehouseTestEnvironment Store(string testPayloadKey, string testPayload, LoadingDockPolicy[] loadingDockPolicies, int warehouseIndex = 0)
+		public WarehouseTestEnvironment Store(string key, string payload, LoadingDockPolicy[] loadingDockPolicies, int warehouseIndex = 0)
 		{
-			Log($"[Action] Storing. Key: {testPayloadKey}. Payload: {testPayload.Substring(0, LesserOfTwo(testPayload.Length,50))}");
-			var storageReceipt = WarehouseServers[warehouseIndex].Store(testPayloadKey, StorageScope, new[] { testPayload }, loadingDockPolicies);
-			StorageReceipts.Add(testPayloadKey, storageReceipt);
+			var warehouseKey = new WarehouseKey(key, scope: StorageScope);
+			Log($"[Action] Storing. Key: {key}. Payload: {payload.Substring(0, LesserOfTwo(payload.Length,50))}");
+			var storageReceipt = WarehouseServers[warehouseIndex].Store(warehouseKey, new[] { payload }, loadingDockPolicies);
+			StorageReceipts.Add(key, storageReceipt);
 			storageReceipt.WasSuccessful.Should().BeTrue();
 			return this;
 		}

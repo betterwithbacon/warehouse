@@ -14,6 +14,16 @@ namespace WarehouseCore
 		{
 			ScopeName = name;
 		}
+
+		public bool Equals(IStorageScope x, IStorageScope y)
+		{
+			return x.Identifier == y.Identifier;
+		}
+
+		public int GetHashCode(IStorageScope obj)
+		{
+			return obj.Identifier.GetHashCode();
+		}
 	}
 
 	public sealed class StorageScope : IStorageScope
@@ -28,6 +38,16 @@ namespace WarehouseCore
 		{
 			ScopeName = name;
 		}
+
+		public bool Equals(IStorageScope x, IStorageScope y)
+		{
+			throw new NotImplementedException();
+		}
+
+		public int GetHashCode(IStorageScope obj)
+		{
+			return obj.Identifier.GetHashCode();
+		}
 	}
 
 	public sealed class LocalScope : IStorageScope
@@ -40,6 +60,16 @@ namespace WarehouseCore
 		{
 			// generate a GUID to identify this scope. it's not expected to be persistent
 			ScopeName = $"local_{Guid.NewGuid().ToString().Replace("-","")}";
+		}
+
+		public bool Equals(IStorageScope x, IStorageScope y)
+		{
+			throw new NotImplementedException();
+		}
+
+		public int GetHashCode(IStorageScope obj)
+		{
+			return obj.Identifier.GetHashCode();
 		}
 	}
 }

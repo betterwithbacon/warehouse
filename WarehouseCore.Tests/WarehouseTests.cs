@@ -26,13 +26,13 @@ namespace WarehouseCore.Tests
 			var warehouse = new Warehouse();
 			warehouse.Initialize();
 
-			var payload = new[] { "Test Test test" };
-			var key = "item1";
+			var payload = new[] { "Test Test test" };			
 			var scope = new ApplicationScope("TestApp");
+			var key = new WarehouseKey($"key", scope);
 
-			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
+			var receipt = warehouse.Store(key, payload, new[] { LoadingDockPolicy.Ephemeral });
 
-			var returnedValue = warehouse.Retrieve(key, scope).ToList();
+			var returnedValue = warehouse.Retrieve<string>(key).ToList();
 
 			returnedValue.Should().Contain(payload);
 		}
@@ -46,14 +46,14 @@ namespace WarehouseCore.Tests
 
 			var payload = Enumerable.Range(1, 500).Select(i => $"record{i}-{Guid.NewGuid()}").ToArray();
 
-			var key = "item1";
 			var scope = new ApplicationScope("TestApp");
+			var key = new WarehouseKey($"key", scope);
 
 			Stopwatch timer = new Stopwatch();
 
 			timer.Start();
-			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
-			var returnedValue = warehouse.Retrieve(key, scope).ToList();
+			var receipt = warehouse.Store(key, payload, new[] { LoadingDockPolicy.Ephemeral });
+			var returnedValue = warehouse.Retrieve<string>(key).ToList();
 			Warehouse.VerifyChecksum(returnedValue, receipt.SHA256Checksum).Should().BeTrue();
 			timer.Stop();
 
@@ -70,13 +70,13 @@ namespace WarehouseCore.Tests
 			var warehouse = new Warehouse();
 			warehouse.Initialize();
 
-			var payload = new[] { "Test Test test" };
-			var key = "item1";
+			var payload = new[] { "Test Test test" };			
 			var scope = new ApplicationScope("TestApp");
+			var key = new WarehouseKey($"key", scope);
 
-			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
+			var receipt = warehouse.Store(key,  payload, new[] { LoadingDockPolicy.Ephemeral });
 
-			var returnedValue = warehouse.Retrieve(key, scope).ToList();
+			var returnedValue = warehouse.Retrieve<string>(key).ToList();
 
 			Warehouse.VerifyChecksum(returnedValue, receipt.SHA256Checksum).Should().BeTrue();
 		}
@@ -89,22 +89,22 @@ namespace WarehouseCore.Tests
 			var warehouse = new Warehouse();
 			warehouse.Initialize();
 
-			var payload = new List<string>() { "Test Test test" };
-			var key = "item1";
+			var payload = new List<string>() { "Test Test test" };			
 			var scope = new ApplicationScope("TestApp");
+			var key = new WarehouseKey($"key", scope);
 
-			var receipt = warehouse.Store(key, scope, payload, new[] { LoadingDockPolicy.Ephemeral });
+			var receipt = warehouse.Store(key, payload, new[] { LoadingDockPolicy.Ephemeral });
 
-			var returnedValue = warehouse.Retrieve(key, scope).ToList();
+			var returnedValue = warehouse.Retrieve<string>(key).ToList();
 
 			returnedValue.Should().Contain(payload);
 
 			var nextText = " 123456789";
 			payload.Add(nextText);
 
-			warehouse.Append(key, scope, new[] { nextText }, receipt.Policies);
+			warehouse.Append(key,  new[] { nextText }, receipt.Policies);
 
-			var newReturnedValue = warehouse.Retrieve(key, scope);
+			var newReturnedValue = warehouse.Retrieve<string>(key);
 			newReturnedValue.Should().Contain(payload);
 		}
 
@@ -120,9 +120,10 @@ namespace WarehouseCore.Tests
 				new ParallelOptions {  MaxDegreeOfParallelism = 10 },
 				(index) => {
 					var payload = new[] { index.ToString() };
-					warehouse.Store(index.ToString(), appScope, payload, new[] { LoadingDockPolicy.Ephemeral });
+					var key = new WarehouseKey($"key_{index}", appScope);
+					warehouse.Store(key, payload, new[] { LoadingDockPolicy.Ephemeral });
 					output.WriteLine($"Index stored: {index}");
-					warehouse.Retrieve(index.ToString(), appScope).Should().Contain(payload);
+					warehouse.Retrieve<string>(key).Should().Contain(payload);
 			});
 		}
 
@@ -134,15 +135,17 @@ namespace WarehouseCore.Tests
 		{
 			var warehouse = new Warehouse();
 			var appScope = new ApplicationScope("Test");
+			
 			Parallel.ForEach(Enumerable.Range(1, 100),
 				new ParallelOptions { MaxDegreeOfParallelism = 10 },
 				(index) => {
 					var payload = new[] { index.ToString() };
 					var additionalPayload = new[] { (index + 100).ToString() };
-					warehouse.Store(index.ToString(), appScope, payload, new[] { LoadingDockPolicy.Ephemeral });
-					warehouse.Append(index.ToString(), appScope, additionalPayload, new[] { LoadingDockPolicy.Ephemeral });
+					var key = new WarehouseKey($"key_{index}", appScope);
+					warehouse.Store(key, payload, new[] { LoadingDockPolicy.Ephemeral });
+					warehouse.Append(key, additionalPayload, new[] { LoadingDockPolicy.Ephemeral });
 					output.WriteLine($"Index stored: {index}");
-					warehouse.Retrieve(index.ToString(), appScope).Should().Contain(payload.Concat(additionalPayload));
+					warehouse.Retrieve<string>(key).Should().Contain(payload.Concat(additionalPayload));
 				});
 		}
 
@@ -153,19 +156,19 @@ namespace WarehouseCore.Tests
 		{
 			var warehouse = new Warehouse();
 			var appScope = new ApplicationScope("Test");
-			var key = "key";
+			var key = new WarehouseKey("key", appScope);
 			var payload = new[] { "initial" };
-			warehouse.Store(key, appScope, payload, new[] { LoadingDockPolicy.Ephemeral });
+			warehouse.Store(key, payload, new[] { LoadingDockPolicy.Ephemeral });
 
 			Parallel.ForEach(Enumerable.Range(1, 100),
 				new ParallelOptions { MaxDegreeOfParallelism = 10 },
 				(index) => {
-					warehouse.Append(key, appScope, new[] { (index + 100).ToString() }, new[] { LoadingDockPolicy.Ephemeral });
+					warehouse.Append(key, new[] { (index + 100).ToString() }, new[] { LoadingDockPolicy.Ephemeral });
 					output.WriteLine($"Index stored: {index}");
 					
 				});
 
-			warehouse.Retrieve(key, appScope).Count().Should().Be(101);
+			warehouse.Retrieve<string>(key).Count().Should().Be(101);
 		}
 
 		[Fact]

@@ -1,6 +1,8 @@
-﻿namespace WarehouseCore
+﻿using System.Collections.Generic;
+
+namespace WarehouseCore
 {
-	public interface IStorageScope
+	public interface IStorageScope : IEqualityComparer<IStorageScope>
 	{
 		string ScopeName { get; }
 
