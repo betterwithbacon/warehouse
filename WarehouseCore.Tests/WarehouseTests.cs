@@ -26,7 +26,7 @@ namespace WarehouseCore.Tests
 			var warehouse = new Warehouse();
 			warehouse.Initialize();
 
-			var payload = new[] { "Test Test test" };			
+			var payload = new[] { "Test Test test" };
 			var scope = new ApplicationScope("TestApp");
 			var key = new WarehouseKey($"key", scope);
 

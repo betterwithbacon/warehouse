@@ -20,6 +20,7 @@ namespace WarehouseCore.Apps
 		{
 			// start a local warehouse			
 			warehouse.Initialize(
+				LighthouseContainer,
 				typeof(LocalDiskShelf)
 			);
 		}
@@ -74,7 +75,7 @@ namespace WarehouseCore.Apps
 		{
 		}
 
-		void IWarehouse.Initialize(params Type[] shelvesToUse)
+		void IWarehouse.Initialize(ILighthouseServiceContainer container, params Type[] shelvesToUse)
 		{
 			throw new NotImplementedException("This warehouse server should be initialized within a lighthouse context.");
 		}

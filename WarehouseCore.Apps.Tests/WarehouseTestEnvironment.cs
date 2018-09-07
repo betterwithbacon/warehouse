@@ -27,7 +27,7 @@ namespace WarehouseCore.Apps.Tests
 		{
 			if (LighthouseServer == null)
 			{
-				LighthouseServer = new LighthouseServer(WriteLine);				
+				LighthouseServer = new LighthouseServer(WriteLine, workingDirectory: @"C:\Development\warehouse\");				
 				LighthouseServer.Start();
 				Log($"Starting lighthouse server {LighthouseServer}.");
 			}

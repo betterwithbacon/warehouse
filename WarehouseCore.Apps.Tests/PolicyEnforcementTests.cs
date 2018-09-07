@@ -60,42 +60,42 @@ namespace WarehouseCore.Apps.Tests
 		}
 		#endregion
 
-		#region Archival
-		[Fact]
-		[Trait(TestTraits.Type, "WarehouseServer")]
-		[Trait(TestTraits.Function, "Store")]
-		[Trait(TestTraits.Tag, TestTraits.Tags.WarehouseServer)]
-		public void Archival_ItemStoredOnWarehouseServer()
-		{
-			var testPayload = "testPayload";
-			var testPayloadKey = "key";
+		//#region Archival
+		//[Fact]
+		//[Trait(TestTraits.Type, "WarehouseServer")]
+		//[Trait(TestTraits.Function, "Store")]
+		//[Trait(TestTraits.Tag, TestTraits.Tags.WarehouseServer)]
+		//public void Archival_ItemStoredOnWarehouseServer()
+		//{
+		//	var testPayload = "testPayload";
+		//	var testPayloadKey = "key";
 
-			GetWarehouseTestEnvironment()
-				.AddLighthouseRuntime()
-				.AddWarehouseServer()
-				.Store(testPayloadKey, testPayload, new[] { LoadingDockPolicy.Archival })
-				.AssertStored(testPayloadKey, testPayload)
-				.AssertStoragePolicy(testPayloadKey);
-		}
-		#endregion
+		//	GetWarehouseTestEnvironment()
+		//		.AddLighthouseRuntime()
+		//		.AddWarehouseServer()
+		//		.Store(testPayloadKey, testPayload, new[] { LoadingDockPolicy.Archival })
+		//		.AssertStored(testPayloadKey, testPayload)
+		//		.AssertStoragePolicy(testPayloadKey);
+		//}
+		//#endregion
 
-		#region ColdStorage
-		[Fact]
-		[Trait(TestTraits.Type, "WarehouseServer")]
-		[Trait(TestTraits.Function, "Store")]
-		[Trait(TestTraits.Tag, TestTraits.Tags.WarehouseServer)]
-		public void ColdStorage_ItemStoredOnWarehouseServer()
-		{
-			var testPayload = "testPayload";
-			var testPayloadKey = "key";
+		//#region ColdStorage
+		//[Fact]
+		//[Trait(TestTraits.Type, "WarehouseServer")]
+		//[Trait(TestTraits.Function, "Store")]
+		//[Trait(TestTraits.Tag, TestTraits.Tags.WarehouseServer)]
+		//public void ColdStorage_ItemStoredOnWarehouseServer()
+		//{
+		//	var testPayload = "testPayload";
+		//	var testPayloadKey = "key";
 
-			GetWarehouseTestEnvironment()
-				.AddLighthouseRuntime()
-				.AddWarehouseServer()
-				.Store(testPayloadKey, testPayload, new[] { LoadingDockPolicy.ColdStorage })
-				.AssertStored(testPayloadKey, testPayload)
-				.AssertStoragePolicy(testPayloadKey);
-		}
-		#endregion
+		//	GetWarehouseTestEnvironment()
+		//		.AddLighthouseRuntime()
+		//		.AddWarehouseServer()
+		//		.Store(testPayloadKey, testPayload, new[] { LoadingDockPolicy.ColdStorage })
+		//		.AssertStored(testPayloadKey, testPayload)
+		//		.AssertStoragePolicy(testPayloadKey);
+		//}
+		//#endregion
 	}
 }

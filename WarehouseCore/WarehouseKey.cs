@@ -25,7 +25,7 @@ namespace WarehouseCore
 
 		public override string ToString()
 		{
-			return base.ToString();
+			return $"[{Scope}]{Id}";
 		}
 
 		public bool Equals(WarehouseKey x, WarehouseKey y)

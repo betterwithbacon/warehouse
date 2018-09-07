@@ -16,11 +16,19 @@ namespace WarehouseCore
 		// ideally, this will be discovered by reflection
 		public static ConcurrentBag<Type> AvailableShelfTypes;
 		public readonly List<Receipt> SessionReceipts = new List<Receipt>();
+
+		public void Initialize()
+		{
+			throw new NotImplementedException();
+		}
+
 		readonly ConcurrentBag<IShelf> Shelves = new ConcurrentBag<IShelf>();
 
 		public event StatusUpdatedEventHandler StatusUpdated;
 
 		private bool IsInitialized => Shelves.Count > 0;
+
+		public ILighthouseServiceContainer LighthouseContainer { get; private set; }
 
 		static Warehouse()
 		{
@@ -36,17 +44,20 @@ namespace WarehouseCore
 				AvailableShelfTypes.Add(shelfType);
 		}
 
-		public Warehouse(bool initImmediately = true)
+		public Warehouse( bool initImmediately = true)
 		{
 			if(initImmediately)			
-				Initialize();			
+				Initialize(null);
 		}
 
-		public void Initialize(params Type[] shelvesToUse)
+		public void Initialize(ILighthouseServiceContainer serviceContainer, params Type[] shelvesToUse)
 		{
 			// only do this once
 			if (IsInitialized)
 				return;
+
+			// register with the service container
+			LighthouseContainer = serviceContainer;
 
 			// Discover shelf types
 			foreach (var shelf in DiscoverShelves())
@@ -117,7 +128,7 @@ namespace WarehouseCore
 				Key = key.Id,
 				Scope = key.Scope,
 				// add the policies that were upheld during the store, this is necessary, 
-				// because this warehouse might not be able to satisfy all of the policies
+				// because this warehouse might not be able to satisfy all of the policies				
 				Policies = enforcedPolicies.Distinct().ToList(),
 				SHA256Checksum = CalculateChecksum<T>(data)				
 			};
