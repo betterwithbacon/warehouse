@@ -24,8 +24,6 @@ namespace WarehouseCore.Tests
 		public void MemoryWarehouseShouldStoreAndReturnPallet()
 		{
 			var warehouse = new Warehouse();
-			warehouse.Initialize();
-
 			var payload = new[] { "Test Test test" };
 			var scope = new ApplicationScope("TestApp");
 			var key = new WarehouseKey($"key", scope);
@@ -41,9 +39,7 @@ namespace WarehouseCore.Tests
 		[Trait("Function", "Signing")]
 		public void PayloadSigningShouldRoundtrip()
 		{
-			var warehouse = new Warehouse();
-			warehouse.Initialize();
-
+			var warehouse = new Warehouse();			
 			var payload = Enumerable.Range(1, 500).Select(i => $"record{i}-{Guid.NewGuid()}").ToArray();
 
 			var scope = new ApplicationScope("TestApp");
@@ -68,8 +64,6 @@ namespace WarehouseCore.Tests
 		public void PayloadSigningShouldRoundtripQuickly()
 		{
 			var warehouse = new Warehouse();
-			warehouse.Initialize();
-
 			var payload = new[] { "Test Test test" };			
 			var scope = new ApplicationScope("TestApp");
 			var key = new WarehouseKey($"key", scope);
@@ -86,9 +80,7 @@ namespace WarehouseCore.Tests
 		[Trait("Function", "StoreAndRetrieve")]
 		public void MemoryWarehouseShouldStoreAndReturnAndAppendAndReturnPallet()
 		{
-			var warehouse = new Warehouse();
-			warehouse.Initialize();
-
+			var warehouse = new Warehouse();			
 			var payload = new List<string>() { "Test Test test" };			
 			var scope = new ApplicationScope("TestApp");
 			var key = new WarehouseKey($"key", scope);

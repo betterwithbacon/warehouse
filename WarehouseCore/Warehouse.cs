@@ -16,14 +16,7 @@ namespace WarehouseCore
 		// ideally, this will be discovered by reflection
 		public static ConcurrentBag<Type> AvailableShelfTypes;
 		public readonly List<Receipt> SessionReceipts = new List<Receipt>();
-
-		public void Initialize()
-		{
-			throw new NotImplementedException();
-		}
-
 		readonly ConcurrentBag<IShelf> Shelves = new ConcurrentBag<IShelf>();
-
 		public event StatusUpdatedEventHandler StatusUpdated;
 
 		private bool IsInitialized => Shelves.Count > 0;
